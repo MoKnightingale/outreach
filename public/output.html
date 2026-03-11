@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>OUTreach Output</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #slide {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 80px;
+    text-align: center;
+    background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #071224 100%);
+    opacity: 1;
+    transition: opacity 0.25s ease;
+  }
+  #line1, #line2 {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 76px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.25;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.9);
+  }
+  .bright { color: #ffe28a !important; }
+  #slide-label {
+    position: absolute;
+    bottom: 28px;
+    right: 36px;
+    font-size: 15px;
+    color: rgba(255,255,255,0.18);
+    font-family: monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div id="slide">
+  <div id="line1">Loading...</div>
+  <div id="line2"></div>
+  <div id="slide-label"></div>
+</div>
+
+<script>
+  const { ipcRenderer } = require('electron')
+
+  const slide = document.getElementById('slide')
+  const line1 = document.getElementById('line1')
+  const line2 = document.getElementById('line2')
+  const label = document.getElementById('slide-label')
+
+  console.log('Output window script loaded ✅')
+
+  function updateSlide(data) {
+    console.log('Slide received:', data)
+    slide.style.opacity = '0'
+    setTimeout(() => {
+      if (data.blank) {
+        slide.style.background = '#000'
+        line1.textContent = ''
+        line2.textContent = ''
+        label.textContent = ''
+      } else {
+        slide.style.background = 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #071224 100%)'
+        line1.textContent = data.line1 || ''
+        line2.textContent = data.line2 || ''
+        label.textContent = data.label || ''
+        if (data.bright) {
+          line1.classList.add('bright')
+          line2.classList.add('bright')
+        } else {
+          line1.classList.remove('bright')
+          line2.classList.remove('bright')
+        }
+      }
+      slide.style.opacity = '1'
+    }, 200)
+  }
+
+  // Listen for slide updates from main process
+  ipcRenderer.on('slide-update', (_event, data) => {
+    console.log('IPC slide-update received:', data)
+    updateSlide(data)
+  })
+</script>
+</body>
+</html>
