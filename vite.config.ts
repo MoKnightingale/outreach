@@ -2,15 +2,21 @@ import { defineConfig } from 'vite'
 import path from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
-  build: {
+ build: {
     rollupOptions: {
       input: {
         main: path.join(__dirname, 'index.html'),
       }
-    }
+    },
+    chunkSizeWarningLimit: 10000,
   },
+  optimizeDeps: {
+    include: [],
+  },
+  assetsInclude: ['**/*.json'],
   plugins: [
     react(),
     electron({

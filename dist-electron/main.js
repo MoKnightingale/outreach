@@ -40,7 +40,9 @@ function createOutputWindow() {
     alwaysOnTop: displays.length > 1,
     webPreferences: {
       contextIsolation: false,
-      nodeIntegration: true
+      nodeIntegration: true,
+      webSecurity: false,
+      allowRunningInsecureContent: true
     }
   });
   if (displays.length === 1) {
@@ -66,9 +68,21 @@ function createOutputWindow() {
   });
 }
 ipcMain.on("project-slide", (_event, slideData) => {
+  console.log("📨 IPC received project-slide:", JSON.stringify(slideData).slice(0, 80));
+  console.log("📺 Output window exists:", !!outputWindow);
+  console.log("📺 Output window destroyed:", outputWindow == null ? void 0 : outputWindow.isDestroyed());
   if (outputWindow && !outputWindow.isDestroyed()) {
     outputWindow.webContents.send("slide-update", slideData);
-    console.log("📽 Projecting:", slideData.line1);
+    console.log("✅ Sent to output window");
+  } else {
+    console.log("❌ Output window not available — recreating...");
+    createOutputWindow();
+    setTimeout(() => {
+      if (outputWindow && !outputWindow.isDestroyed()) {
+        outputWindow.webContents.send("slide-update", slideData);
+        console.log("✅ Sent after recreate");
+      }
+    }, 1500);
   }
 });
 ipcMain.on("blank-screen", () => {
@@ -84,6 +98,15 @@ ipcMain.on("toggle-output", () => {
   }
 });
 app.whenReady().then(() => {
+  app.on("web-contents-created", (_event, contents) => {
+    contents.session.setPermissionRequestHandler((_webContents, permission, callback) => {
+      if (permission === "media") {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    });
+  });
   createMainWindow();
   createOutputWindow();
   app.on("activate", () => {
